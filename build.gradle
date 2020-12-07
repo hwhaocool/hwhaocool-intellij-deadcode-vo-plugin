@@ -1,0 +1,42 @@
+// Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+plugins {
+  id 'java'
+  id 'org.jetbrains.intellij' version '0.6.5'
+}
+
+group 'org.intellij.sdk'
+version '2.0.0'
+
+sourceCompatibility = 1.8
+
+// 编码
+[compileJava,compileTestJava,javadoc]*.options*.encoding = 'UTF-8'
+
+repositories {
+    maven {
+            url "http://192.168.2.101:18081/repository/maven-public/"
+        }
+  mavenCentral()
+}
+
+dependencies {
+  testImplementation group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+// See https://github.com/JetBrains/gradle-intellij-plugin/
+intellij {
+  version = '2020.1'
+  plugins = ['com.intellij.java']
+}
+
+buildSearchableOptions {
+  enabled = false
+}
+
+patchPluginXml {
+  version = project.version
+  sinceBuild = '201'
+  untilBuild = '203.*'
+}
