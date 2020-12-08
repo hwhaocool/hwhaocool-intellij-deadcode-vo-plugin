@@ -102,6 +102,11 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * 源码有改动
+ * @author YellowTail
+ * @since 2020-12-08
+ */
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
     private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
             ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
@@ -123,6 +128,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     private static final String DELETE = "delete";
     @NonNls
     private static final String COMMENT = "comment";
+
+    @Override
+    public boolean isDummy() {
+        // 这个是为了控制  com.intellij.codeInspection.ex.InspectionRVContentProvider.buildTree 280 行的一个条件，让 showStructure 等于 true， 不然构造方法就不显示了
+        // 之所以这样，还是因为 intellij 把代码写死了
+        return true;
+    }
 
     private enum UnusedDeclarationHint {
         COMMENT("Commented out"),
@@ -488,6 +500,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @NotNull
     @Override
     public RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
+
+        //创建 node
         return new UnusedDeclarationRefElementNode(entity, this, parent);
     }
 

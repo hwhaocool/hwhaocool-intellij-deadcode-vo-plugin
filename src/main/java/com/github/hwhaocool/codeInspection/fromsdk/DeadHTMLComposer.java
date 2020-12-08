@@ -121,6 +121,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             @Override
             public void visitClass(@NotNull RefClass refClass) {
                 if (refClass.isAnonymous()) {
+                    //Anonymous class declaration context is not reachable from entry points. Class is never instantiated.
                     buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis10"));
                 } else if (refClass.isInterface() || refClass.isAbstract()) {
                     String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
@@ -137,6 +138,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
                         buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis25", classOrInterface, nDerived));
                     }
                 } else if (refClass.isUtilityClass()) {
+                    // No class references has been found. Class static initializer is not reachable.
                     buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11"));
                 } else {
                     int nInstantiationsCount = getInstantiationsCount(refClass);

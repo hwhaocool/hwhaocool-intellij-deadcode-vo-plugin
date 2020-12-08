@@ -2,6 +2,7 @@
 
 package com.github.hwhaocool.codeInspection.fromsdk;
 
+import com.github.hwhaocool.codeInspection.fromsdk.unusedSymbol.UnusedSymbolLocalInspectionImpl;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedParameterFix;
@@ -24,7 +25,6 @@ import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.codeInspection.reference.RefParameter;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
+
     @Override
     public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
                                                              @NotNull final AnalysisScope scope,
@@ -71,11 +72,13 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                 return null;
             }
 
+            // 抽象类、接口
             RefClass aClass = refMethod.getOwnerClass();
             if (aClass != null && ((refMethod.isAbstract() || aClass.isInterface()) && refMethod.getDerivedMethods().isEmpty())) {
                 return null;
             }
 
+            // main 方法
             if (refMethod.isAppMain()) {
                 return null;
             }
@@ -86,6 +89,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                 return null;
             }
 
+            // 方法是一个入口
             if (refMethod.isEntry()) {
                 return null;
             }
@@ -94,6 +98,8 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             if (uMethod == null) {
                 return null;
             }
+
+            // 入口
             final PsiElement element = uMethod.getJavaPsi();
             if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) {
                 return null;
@@ -104,6 +110,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                 UParameter parameter = refParameter.getUastElement();
                 PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
                 if (anchor != null) {
+                    System.out.println("create Problem");
                     result.add(manager.createProblemDescriptor(anchor,
                             JavaBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
                             new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
@@ -112,6 +119,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             }
             return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
         }
+
         return null;
     }
 
@@ -132,8 +140,11 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                     RefMethod refMethod = (RefMethod) refEntity;
                     UDeclaration uastElement = refMethod.getUastElement();
                     if (uastElement != null) {
+
                         PsiMethod element = (PsiMethod) uastElement.getJavaPsi();
-                        if (element != null && !refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+                        if (element != null && !refMethod.isStatic() && !refMethod.isConstructor()
+                                && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+
                             final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
                             if (unusedParameters.isEmpty()) {
                                 return;
@@ -201,7 +212,8 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         clearUsedParameters(refMethod, result, checkDeep);
 
         for (RefParameter parameter : result) {
-            if (parameter != null && !((RefElementImpl) parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
+            if (parameter != null && !((RefElementImpl) parameter)
+                    .isSuppressed(UnusedSymbolLocalInspectionImpl.UNUSED_PARAMETERS_SHORT_NAME, UnusedSymbolLocalInspectionImpl.UNUSED_ID)) {
                 res.add(parameter);
             }
         }

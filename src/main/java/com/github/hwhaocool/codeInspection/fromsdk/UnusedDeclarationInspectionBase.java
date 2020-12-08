@@ -2,6 +2,7 @@
 package com.github.hwhaocool.codeInspection.fromsdk;
 
 import com.github.hwhaocool.codeInspection.deadcode.Constants;
+import com.github.hwhaocool.codeInspection.fromsdk.unusedSymbol.UnusedSymbolLocalInspectionImpl;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
@@ -23,12 +24,15 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefElementImpl;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefFieldImpl;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
+import com.intellij.codeInspection.reference.RefImplicitConstructorImpl;
 import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.reference.RefJavaElementImpl;
 import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
@@ -47,10 +51,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +80,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * 原版代码来自 com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase， 修改了很多
+ * @author YellowTail
+ * @since 2020-12-08
+ */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
 
@@ -82,19 +94,38 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     public boolean ADD_NONJAVA_TO_ENTRIES = true;
     private boolean TEST_ENTRY_POINTS = true;
 
+
+    /**
+     * 这个是重中之重， intellij 对插件 shortName 的校验很严格，包括从上下文拿到插件对象，有的地方也是通过 shortName 来实现的，一定要修改，且要统一
+     */
     public static final String SHORT_NAME = Constants.SHORT_NAME;
+
+//    public static final String SHORT_NAME = "unused";
+//    public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
     final List<EntryPoint> myExtensions = ContainerUtil.createLockFreeCopyOnWriteList();
     public final UnusedSymbolLocalInspectionBase myLocalInspectionBase = createUnusedSymbolLocalInspection();
 
-    private static final Key<Set<RefElement>> PROCESSED_SUSPICIOUS_ELEMENTS_KEY = Key.create("java.unused.declaration.processed.suspicious.elements");
-    private static final Key<Integer> PHASE_KEY = Key.create("java.unused.declaration.phase");
+    protected static final Key<Set<RefElement>> PROCESSED_SUSPICIOUS_ELEMENTS_KEY = Key.create("java.unused.declaration.processed.suspicious.elements");
+    protected static final Key<Integer> PHASE_KEY = Key.create("java.unused.declaration.phase");
 
     private final boolean myEnabledInEditor;
 
     @SuppressWarnings("TestOnlyProblems")
     public UnusedDeclarationInspectionBase() {
         this(!ApplicationManager.getApplication().isUnitTestMode());
+    }
+
+    @NotNull
+    public String getGroupDisplayName() {
+
+        return "Declaration Redundancy";
+    }
+
+    @NotNull
+    @Override
+    public UnusedSymbolLocalInspectionBase getSharedLocalInspectionTool() {
+        return myLocalInspectionBase;
     }
 
     @TestOnly
@@ -114,14 +145,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
-        return new UnusedSymbolLocalInspectionBase();
+        return new UnusedSymbolLocalInspectionImpl();
     }
 
-    @NotNull
-    @Override
-    public UnusedSymbolLocalInspectionBase getSharedLocalInspectionTool() {
-        return myLocalInspectionBase;
-    }
+
 
     private boolean isAddMainsEnabled() {
         return ADD_MAINS_TO_ENTRIES;
@@ -145,12 +172,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     public void setTestEntryPoints(boolean testEntryPoints) {
         TEST_ENTRY_POINTS = testEntryPoints;
-    }
-
-    @Override
-    @NotNull
-    public String getGroupDisplayName() {
-        return InspectionsBundle.message("group.names.declaration.redundancy");
     }
 
     @Override
@@ -331,13 +352,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                               @NotNull final GlobalInspectionContext globalContext,
                               @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
 
-        System.out.println("UnusedDeclarationInspectionBase UnusedDeclarationInspectionBase runInspection");
-
         globalContext.getRefManager().iterate(new RefJavaVisitor() {
             @Override
             public void visitElement(@NotNull final RefEntity refEntity) {
 
-                System.out.println("UnusedDeclarationInspectionBase UnusedDeclarationInspectionBase runInspection visitElement");
 
                 if (refEntity instanceof RefElementImpl) {
                     final RefElementImpl refElement = (RefElementImpl) refEntity;
@@ -487,6 +505,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
     }
 
+    // 会被自动调用
     @Override
     public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
                                                @NotNull GlobalInspectionContext globalContext,
@@ -495,7 +514,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         System.out.println("UnusedDeclarationInspectionBase queryExternalUsagesRequests");
 
         checkForReachableRefs(globalContext);
+
         int phase = Objects.requireNonNull(globalContext.getUserData(PHASE_KEY));
+
+        // 已经处理的 ref 对象，避免重复处理
         Set<RefElement> processedSuspicious = globalContext.getUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY);
 
         final boolean firstPhase = phase == 1;
@@ -508,9 +530,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             @Override
             public void visitElement(@NotNull RefEntity refEntity) {
                 if (!(refEntity instanceof RefJavaElement)) {
+                    //跳过文件类型、 package的
                     return;
                 }
                 if (refEntity instanceof RefClass && ((RefClass) refEntity).isAnonymous()) {
+                    //跳过匿名类
                     return;
                 }
                 RefJavaElement refElement = (RefJavaElement) refEntity;
@@ -519,7 +543,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
                         @Override
                         public void visitField(@NotNull final RefField refField) {
-                            System.out.println("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitField");
+
+                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitField  %s", refField);
 
                             processedSuspicious.add(refField);
                             UField uField = refField.getUastElement();
@@ -536,7 +561,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
                         @Override
                         public void visitMethod(@NotNull final RefMethod refMethod) {
-                            System.out.println("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitMethod");
+
+                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitMethod  %s", refMethod);
 
                             processedSuspicious.add(refMethod);
                             if (refMethod instanceof RefImplicitConstructor) {
@@ -562,30 +588,59 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
                         @Override
                         public void visitClass(@NotNull final RefClass refClass) {
-                            System.out.println("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitClass");
 
+                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitClass  %s", refClass);
+
+                            // 添加到已分析集合，避免重复分析
                             processedSuspicious.add(refClass);
-                            if (!refClass.isAnonymous()) {
-                                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueDerivedClassesProcessor(refClass, inheritor -> {
-                                    getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
-                                    return false;
-                                });
 
-                                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueClassUsagesProcessor(refClass, psiReference -> {
-                                    getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
-                                    return false;
-                                });
-
-                                queryQualifiedNameUsages(refClass);
-                                requestAdded[0] = true;
+                            if (refClass.isAnonymous()) {
+                                // 匿名类，不分析了
+                                return;
                             }
+
+//                            PsiElement psiElement = refClass.getPsiElement();
+//
+//                            Query<PsiReference> search = ReferencesSearch.search(psiElement);
+//                            PsiReference first = search.findFirst();
+//                            if (null == first) {
+//                                problemDescriptionsProcessor.addProblemElement(refEntity);
+//                            }
+
+                            globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
+                                    .enqueueDerivedClassesProcessor(refClass, inheritor -> {
+
+                                getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
+
+                                return false;
+                            });
+
+
+                            // 排队 计算 class 的 使用情况
+                            globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
+                                    .enqueueClassUsagesProcessor(refClass, psiReference -> {
+
+                                printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitClass enqueueClassUsagesProcessor %s", refClass);
+
+                                getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
+
+                                return false;
+                            });
+
+                            queryQualifiedNameUsages(refClass);
+                            requestAdded[0] = true;
+
                         }
 
                         public void queryQualifiedNameUsages(@NotNull RefClass refClass) {
                             if (firstPhase && isAddNonJavaUsedEnabled()) {
-                                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
+
+                                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
+                                        .enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
+
                                     EntryPointsManager entryPointsManager = getEntryPointsManager(globalContext);
                                     entryPointsManager.addEntryPoint(refClass, false);
+
                                     for (RefMethod constructor : refClass.getConstructors()) {
                                         entryPointsManager.addEntryPoint(constructor, false);
                                     }
@@ -684,8 +739,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         @Override
         public void visitMethod(@NotNull RefMethod method) {
 
-            System.out.println("UnusedDeclarationInspectionBase CodeScanner visitMethod");
-
+            printName("UnusedDeclarationInspectionBase CodeScanner visitMethod  %s", method);
 
             if (!myProcessedMethods.contains(method)) {
                 // Process class's static initializers
@@ -728,7 +782,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
         @Override
         public void visitClass(@NotNull RefClass refClass) {
-            System.out.println("UnusedDeclarationInspectionBase CodeScanner visitClass");
+
+            printName("UnusedDeclarationInspectionBase CodeScanner visitClass  %s", refClass);
 
             boolean alreadyActive = refClass.isReachable();
             ((RefClassImpl) refClass).setReachable(true);
@@ -743,6 +798,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
         @Override
         public void visitField(@NotNull RefField field) {
+
+            printName("UnusedDeclarationInspectionBase CodeScanner visitField  %s", field);
+
             // Process class's static initializers.
             if (!field.isReachable()) {
                 makeContentReachable((RefJavaElementImpl) field);
@@ -822,6 +880,29 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     public static String getDisplayNameText() {
+        System.out.println("getDisplayNameText");
         return AnalysisBundle.message("inspection.dead.code.display.name");
+    }
+
+    public static void printName(String format, RefJavaElement refJavaElement) {
+
+        String name = null;
+
+        if (refJavaElement instanceof RefClassImpl) {
+            name = RefClassImpl.class.cast(refJavaElement).getName();
+        }
+        else if (refJavaElement instanceof RefMethodImpl) {
+            name =  RefMethodImpl.class.cast(refJavaElement).getName();
+        }
+        else if (refJavaElement instanceof RefFieldImpl) {
+            name =  RefFieldImpl.class.cast(refJavaElement).getName();
+        }
+        else if (refJavaElement instanceof RefImplicitConstructorImpl) {
+            name =  RefImplicitConstructorImpl.class.cast(refJavaElement).getName();
+        } else {
+            name = " empty";
+        }
+
+        System.out.println(String.format(format, name));
     }
 }
