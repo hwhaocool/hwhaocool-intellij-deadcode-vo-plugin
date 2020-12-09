@@ -6,7 +6,7 @@
     <id>org.intellij.sdk.codeInspection</id>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page -->
-    <name>SDK: hello Comparing References Inspection Sample</name>
+    <name>Yellow Tail VO: can find unused VO in recursion mode</name>
 
     <!-- Evaluates java PSI -->
     <depends>com.intellij.java</depends>
@@ -14,29 +14,27 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Demonstrates implementing a Local Inspection Tool.<br> Adds entries to
+      Yellow Tail VO inspections plugin: can find unused VO in recursion mode
       <b>Preferences | Editor | Inspections | Java | Probable Bugs</b>.
     ]]>
     </description>
     <change-notes>
         <![CDATA[
       <ul>
-        <li><b>2.0.0</b> Convert to Gradle-based plugin.</li>
-        <li><b>1.1.0</b> Refactor resources, register this inspection.</li>
-        <li><b>1.0.0</b> Release 2018.3 and earlier.</li>
+        <li><b>1.0</b> Release 1.0, can find unused VO in recursion mode</li>
       </ul>
     ]]>
     </change-notes>
 
     <!-- Text to display as company information on Preferences/Settings | Plugin page -->
-    <vendor url="https://plugins.jetbrains.com">IntelliJ Platform SDK</vendor>
+    <vendor url="https://github.com/hwhaocool/intellij-deadcode-vo-plugin">Yellow Tail VO</vendor>
 
     <extensions defaultExtensionNs="com.intellij">
 
         <globalInspection language="JAVA"
                           groupPath="Java"
                           shortName="aayellow"
-                          displayName="Yellow Tail"
+                          displayName="Yellow Tail VO"
                           hasStaticDescription="true"
                           groupBundle="messages.InspectionsBundle"
                          groupKey="group.names.declaration.redundancy"
