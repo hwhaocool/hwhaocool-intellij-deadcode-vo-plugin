@@ -126,10 +126,13 @@ public class YellowVoInspection extends UnusedDeclarationInspectionBase {
     @Override
     public JComponent createOptionsPanel() {
         JTabbedPane tabs = new JBTabbedPane(SwingConstants.TOP);
-        tabs.add(JavaBundle.message("tab.title.members.to.report"),
+
+        // 1. 得到范围选项面板
+        tabs.add("Members to report",
                 ScrollPaneFactory.createScrollPane(myLocalInspectionBase.createOptionsPanel(), true));
 
-        tabs.add(JavaBundle.message("tab.title.entry.points"),
+        // 2. 得到 入口选项面板
+        tabs.add("Entry points",
                 ScrollPaneFactory.createScrollPane(new YellowVoInspection.OptionsPanel(), true));
         return tabs;
     }
@@ -154,10 +157,13 @@ public class YellowVoInspection extends UnusedDeclarationInspectionBase {
             gc.gridx = 0;
             gc.gridy = 0;
             gc.gridwidth = 2;
-            add(new JBLabel(JavaBundle.message("label.unused.declaration.reachable.from.tests.option")), gc);
+            add(new JBLabel("When entry points are in test sources, mark callees as:"), gc);
             gc.gridy++;
 
+            // used
             final JBRadioButton asEntryPoint = new JBRadioButton(JavaBundle.message("radio.button.unused.declaration.used.option"), isTestEntryPoints());
+
+            // unused
             final JBRadioButton asUnused = new JBRadioButton(JavaBundle.message("radio.button.unused.declaration.unused.option"), !isTestEntryPoints());
             final ButtonGroup group = new ButtonGroup();
             group.add(asEntryPoint);
@@ -179,7 +185,7 @@ public class YellowVoInspection extends UnusedDeclarationInspectionBase {
             gc.gridwidth = 2;
             add(new TitledSeparator(), gc);
             gc.gridy++;
-            add(new JBLabel(JavaBundle.message("label.entry.points")), gc);
+            add(new JBLabel("Entry points:"), gc);
             gc.insets = JBUI.insets(5, 0, 0, 0);
             gc.gridy++;
 
@@ -187,6 +193,7 @@ public class YellowVoInspection extends UnusedDeclarationInspectionBase {
             gc.gridy++;
             gc.insets = JBUI.insets(0, 5, 2, 0);
 
+            // main 方法
             myMainsCheckbox = new JCheckBox(JavaBundle.message("inspection.dead.code.option.main"));
             myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
             myMainsCheckbox.addActionListener(e -> ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected());
