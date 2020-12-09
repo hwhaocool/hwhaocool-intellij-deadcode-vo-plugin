@@ -507,8 +507,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                                @NotNull GlobalInspectionContext globalContext,
                                                @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
 
-        System.out.println("UnusedDeclarationInspectionBase queryExternalUsagesRequests");
-
         checkForReachableRefs(globalContext);
 
         int phase = Objects.requireNonNull(globalContext.getUserData(PHASE_KEY));
@@ -595,14 +593,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                 return;
                             }
 
-//                            PsiElement psiElement = refClass.getPsiElement();
-//
-//                            Query<PsiReference> search = ReferencesSearch.search(psiElement);
-//                            PsiReference first = search.findFirst();
-//                            if (null == first) {
-//                                problemDescriptionsProcessor.addProblemElement(refEntity);
-//                            }
-
+                            // 派生类
                             globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
                                     .enqueueDerivedClassesProcessor(refClass, inheritor -> {
 
@@ -612,14 +603,24 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                             });
 
 
-                            // 排队 计算 class 的 使用情况
+                            // 计算 class 的 使用情况
                             globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
                                     .enqueueClassUsagesProcessor(refClass, psiReference -> {
 
                                 printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitClass enqueueClassUsagesProcessor %s", refClass);
 
+                                // 这里的 false, 会让 com.intellij.codeInspection.ex.EntryPointsManagerBase.addEntryPoint 383行
+                                // 执行 this.myTemporaryEntryPoints.add(newEntryPoint);
+                                // 然后在 com.github.hwhaocool.codeInspection.fromsdk.UnusedDeclarationInspectionBase.checkForReachableRefs 里执行 entry.accept()
+                                // 执行之后，这些就会对象就被识别成 可达， reachable
                                 getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
 
+                                for (RefClass outTypeReference : refClass.getOutTypeReferences()) {
+                                    // 得到字段的 class 类型
+                                    getEntryPointsManager(globalContext).addEntryPoint(outTypeReference, false);
+                                }
+
+                                // 这个返回值没看出来有什么作用
                                 return false;
                             });
 
@@ -711,7 +712,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             }
         });
 
-
+        // getEntryPointsManager(context).getEntryPoints(refManager) 已经可以得到 有被使用的类
         for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
             entry.accept(codeScanner);
         }
