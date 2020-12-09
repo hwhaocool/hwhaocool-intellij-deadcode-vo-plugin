@@ -615,10 +615,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                 // 执行之后，这些就会对象就被识别成 可达， reachable
                                 getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
 
-                                for (RefClass outTypeReference : refClass.getOutTypeReferences()) {
-                                    // 得到字段的 class 类型
-                                    getEntryPointsManager(globalContext).addEntryPoint(outTypeReference, false);
-                                }
+                                // 通过方法 getOutTypeReferences 得到字段的 class 类型
+                                // 需要考虑嵌套
+                                recursionSetReachable(globalContext, refClass);
 
                                 // 这个返回值没看出来有什么作用
                                 return false;
@@ -879,6 +878,27 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     public static String getDisplayNameText() {
         System.out.println("getDisplayNameText");
         return AnalysisBundle.message("inspection.dead.code.display.name");
+    }
+
+    /**
+     * 递归过程中已经处理的 RefClass
+     */
+    private final static Set<RefClass> PROCESSED_REFCLASS = new HashSet<>();
+
+    private static void recursionSetReachable(final @NotNull GlobalInspectionContext globalContext, final @NotNull RefClass refClass) {
+        // 得到字段的 class 类型
+        for (RefClass outTypeReference : refClass.getOutTypeReferences()) {
+
+            if (PROCESSED_REFCLASS.contains(outTypeReference)) {
+                //已经处理了，直接下一个
+                continue;
+            }
+            PROCESSED_REFCLASS.add(outTypeReference);
+
+            getEntryPointsManager(globalContext).addEntryPoint(outTypeReference, false);
+
+            recursionSetReachable(globalContext, outTypeReference);
+        }
     }
 
     public static void printName(String format, RefJavaElement refJavaElement) {
