@@ -83,7 +83,7 @@ public class YellowVoInspection extends UnusedDeclarationInspectionBase {
 
     @Override
     public String getStaticDescription() {
-        return "find unused VO in recursion mode";
+        return "find unused VO in recursion mode <br> 哈哈";
     }
 
     @Nullable

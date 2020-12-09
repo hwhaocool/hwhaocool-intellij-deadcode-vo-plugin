@@ -379,7 +379,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     public boolean isEntryPoint(@NotNull RefElement owner) {
-        System.out.println("UnusedDeclarationInspectionBase isEntryPoint RefElement");
 
         PsiElement element = owner.getPsiElement();
         if (owner instanceof RefJavaElement) {
@@ -419,7 +418,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     public boolean isEntryPoint(@NotNull PsiElement element) {
-        System.out.println("UnusedDeclarationInspectionBase isEntryPoint PsiElement");
 
         final Project project = element.getProject();
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -475,7 +473,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
     @NotNull
     public static UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
-        System.out.println("UnusedDeclarationInspectionBase findUnusedDeclarationInspection");
 
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
         UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase) profile.getUnwrappedTool(SHORT_NAME, element);
@@ -876,7 +873,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     public static String getDisplayNameText() {
-        System.out.println("getDisplayNameText");
         return AnalysisBundle.message("inspection.dead.code.display.name");
     }
 
