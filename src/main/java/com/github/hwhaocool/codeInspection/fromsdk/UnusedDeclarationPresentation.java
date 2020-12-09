@@ -734,10 +734,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
         css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
         css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
+
+        // 1. 生成 sb 对象
         final StringBuilder buf = new StringBuilder();
+
+        // 2. 调用 com.github.hwhaocool.codeInspection.fromsdk.DeadHTMLComposer.compose 生成具体信息
         getComposer().compose(buf, entity, false);
+
         final String text = buf.toString();
         SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));
+
         return ScrollPaneFactory.createScrollPane(htmlView, true);
     }
 

@@ -62,6 +62,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
                     @Override
                     public void visitClass(@NotNull RefClass aClass) {
                         appendClassInstantiations(buf, aClass);
+
                         myComposer.appendDerivedClasses(buf, aClass);
                         myComposer.appendClassExtendsImplements(buf, aClass);
                         myComposer.appendLibraryMethods(buf, aClass);
@@ -85,6 +86,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             } else {
                 appendNoProblems(buf);
             }
+
+            // 使用当前对象的地方，也就是调用者信息
             appendCallesList(refElement, buf, new HashSet<>(), true);
         }
     }
@@ -141,20 +144,22 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
                     // No class references has been found. Class static initializer is not reachable.
                     buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis11"));
                 } else {
-                    int nInstantiationsCount = getInstantiationsCount(refClass);
+//                    int nInstantiationsCount = getInstantiationsCount(refClass);
+//
+//                    if (nInstantiationsCount == 0) {
+//                        int nImplementations = getImplementationsCount(refClass);
+//                        if (nImplementations != 0) {
+//                            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
+//                        } else {
+//                            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis13"));
+//                        }
+//                    } else if (nInstantiationsCount == 1) {
+//                        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis12"));
+//                    } else {
+//                        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
+//                    }
 
-                    if (nInstantiationsCount == 0) {
-                        int nImplementations = getImplementationsCount(refClass);
-                        if (nImplementations != 0) {
-                            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis19", nImplementations));
-                        } else {
-                            buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis13"));
-                        }
-                    } else if (nInstantiationsCount == 1) {
-                        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis12"));
-                    } else {
-                        buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis20", nInstantiationsCount));
-                    }
+                    buf.append("Class is never used");
                 }
             }
 
@@ -308,30 +313,25 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         return count;
     }
 
+    /**
+     * 这个是组装 类的初始化信息， 经常误报，很烦人，直接把逻辑删了
+     * @param buf
+     * @param refClass
+     * @author YellowTail
+     * @since 2020-12-09
+     */
     private void appendClassInstantiations(@NotNull StringBuilder buf, RefClass refClass) {
-        if (!refClass.isInterface() && !refClass.isAbstract() && !refClass.isUtilityClass()) {
-            boolean found = false;
-
-            appendHeading(buf, AnalysisBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
-
-            startList(buf);
-            for (RefMethod refMethod : refClass.getConstructors()) {
-                for (RefElement refCaller : refMethod.getInReferences()) {
-                    appendListItem(buf, refCaller);
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                startListItem(buf);
-                buf.append(AnalysisBundle.message("inspection.dead.code.export.results.no.instantiations.found"));
-                doneListItem(buf);
-            }
-
-            doneList(buf);
-        }
     }
 
+    /**
+     * 使用当前对象的地方，也就是调用者信息
+     * @param element
+     * @param buf
+     * @param mentionedElements
+     * @param appendCallees
+     * @author YellowTail
+     * @since 2020-12-09
+     */
     private void appendCallesList(RefElement element, @NotNull StringBuilder buf, Set<? super RefElement> mentionedElements, boolean appendCallees) {
         final Set<RefElement> possibleChildren = getPossibleChildren(element);
         if (!possibleChildren.isEmpty()) {
