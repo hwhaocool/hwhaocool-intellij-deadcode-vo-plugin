@@ -1,4 +1,4 @@
-hwhaocool-intellij-deadcode-vo-plugin
+intellij-deadcode-vo-plugin
 ---
 
 ## 作用
