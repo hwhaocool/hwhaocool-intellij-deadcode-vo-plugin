@@ -110,7 +110,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                 UParameter parameter = refParameter.getUastElement();
                 PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
                 if (anchor != null) {
-                    
+
                     result.add(manager.createProblemDescriptor(anchor,
                             JavaBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
                             new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),

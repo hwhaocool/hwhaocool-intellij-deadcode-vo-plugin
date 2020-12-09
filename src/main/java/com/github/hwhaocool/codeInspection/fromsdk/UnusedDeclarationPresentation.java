@@ -292,7 +292,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
     class PermanentDeleteAction extends QuickFixAction {
         PermanentDeleteAction(@NotNull InspectionToolWrapper toolWrapper) {
-            super(AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix"), AllIcons.Actions.Cancel, null, toolWrapper);
+            super("Safe Delete", AllIcons.Actions.Cancel, null, toolWrapper);
+
             copyShortcutFrom(ActionManager.getInstance().getAction("SafeDelete"));
         }
 
@@ -662,7 +663,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         @Override
         @NotNull
         public String getFamilyName() {
-            return AnalysisBundle.message("inspection.dead.code.safe.delete.quickfix");
+            return "Safe Delete";
         }
 
 
