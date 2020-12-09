@@ -65,7 +65,10 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
                         myComposer.appendDerivedClasses(buf, aClass);
                         myComposer.appendClassExtendsImplements(buf, aClass);
-                        myComposer.appendLibraryMethods(buf, aClass);
+
+                        // override 的方法， 不需要
+//                        myComposer.appendLibraryMethods(buf, aClass);
+
                         myComposer.appendTypeReferences(buf, aClass);
                     }
 
