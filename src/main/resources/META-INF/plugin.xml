@@ -14,8 +14,13 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Yellow Tail VO inspections plugin: can find unused VO in recursion mode
-      <b>Preferences | Editor | Inspections | Java | Probable Bugs</b>.
+      Yellow Tail VO inspections plugin: can find unused VO in recursion mode <br>
+      使用递归模式尽可能的设置一些类状态为『可达』， 和原生插件『unused declaration』的不同是： <br>
+      原生插件会尽可能多的提醒 <br><br>
+      本插件是： <b>宁放过，勿杀错。<b><br><br>
+      扫描出来的东西绝对是 dead code， 可以放心的 Safe Delete <br>
+      <b>Preferences | Editor | Inspections | Java | Probable Bugs</b>.<br><br>
+      使用： Analyze -- Run Inspection By Name -- Yellow Tail
     ]]>
     </description>
     <change-notes>
