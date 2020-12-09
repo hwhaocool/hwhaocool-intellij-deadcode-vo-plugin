@@ -44,4 +44,17 @@ public class UnusedSymbolLocalInspectionImpl extends UnusedSymbolLocalInspection
     public String getAlternativeID() {
         return Constants.ALTERNATIVE_ID;
     }
+
+    // 构造方法
+    public UnusedSymbolLocalInspectionImpl() {
+
+        // 改变 一些选项的默认选择状态， 让窗口出来的时候，只有 class 一项是被选中的
+
+        super.FIELD = false;
+        super.LOCAL_VARIABLE = false;
+        super.METHOD = false;
+        super.INNER_CLASS = false;
+        super.PARAMETER = false;
+
+    }
 }
