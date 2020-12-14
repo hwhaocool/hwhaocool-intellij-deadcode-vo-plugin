@@ -18,7 +18,7 @@
       使用递归模式尽可能的设置一些类状态为『可达』， 和原生插件『unused declaration』的不同是： <br>
       原生插件会尽可能多的提醒 <br><br>
       本插件是： <b>宁放过，勿杀错。<b><br><br>
-      扫描出来的东西绝对是 dead code， 可以放心的 Safe Delete <br>
+      扫描出来的东西大概率是 dead code， 可以比较放心的 Safe Delete （删除代码有风险，删除请谨慎） <br>
       <b>Preferences | Editor | Inspections | Java | Probable Bugs</b>.<br><br>
       使用： Analyze -- Run Inspection By Name -- Yellow Tail
     ]]>
@@ -27,6 +27,7 @@
         <![CDATA[
       <ul>
         <li><b>1.0</b> Release 1.0, can find unused VO in recursion mode</li>
+        <li><b>2.0</b> Release 2.0, 扫描的时候增加了解析泛型的步骤</li>
       </ul>
     ]]>
     </change-notes>

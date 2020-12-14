@@ -2,6 +2,8 @@
 package com.github.hwhaocool.codeInspection.fromsdk;
 
 import com.github.hwhaocool.codeInspection.deadcode.Constants;
+import com.github.hwhaocool.codeInspection.deadcode.RecursionField;
+import com.github.hwhaocool.codeInspection.deadcode.RecursionReachable;
 import com.github.hwhaocool.codeInspection.fromsdk.unusedSymbol.UnusedSymbolLocalInspectionImpl;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
@@ -535,7 +537,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                         @Override
                         public void visitField(@NotNull final RefField refField) {
 
-                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitField  %s", refField);
+//                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitField  %s", refField);
 
                             processedSuspicious.add(refField);
                             UField uField = refField.getUastElement();
@@ -553,7 +555,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                         @Override
                         public void visitMethod(@NotNull final RefMethod refMethod) {
 
-                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitMethod  %s", refMethod);
+//                            printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitMethod  %s", refMethod);
 
                             processedSuspicious.add(refMethod);
                             if (refMethod instanceof RefImplicitConstructor) {
@@ -604,7 +606,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                             globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT)
                                     .enqueueClassUsagesProcessor(refClass, psiReference -> {
 
-                                printName("UnusedDeclarationInspectionBase queryExternalUsagesRequests visitClass enqueueClassUsagesProcessor %s", refClass);
+                                printName("UnusedDeclarationInspectionBase class_has_been_used visitClass  %s", refClass);
 
                                 // 这里的 false, 会让 com.intellij.codeInspection.ex.EntryPointsManagerBase.addEntryPoint 383行
                                 // 执行 this.myTemporaryEntryPoints.add(newEntryPoint);
@@ -614,7 +616,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
                                 // 通过方法 getOutTypeReferences 得到字段的 class 类型
                                 // 需要考虑嵌套
-                                recursionSetReachable(globalContext, refClass);
+                                RECURSION_REACHABLE.setReachable(globalContext, refClass, PROCESSED_REFCLASS);
 
                                 // 这个返回值没看出来有什么作用
                                 return false;
@@ -732,7 +734,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         @Override
         public void visitMethod(@NotNull RefMethod method) {
 
-            printName("UnusedDeclarationInspectionBase CodeScanner visitMethod  %s", method);
+//            printName("UnusedDeclarationInspectionBase CodeScanner visitMethod  %s", method);
 
             if (!myProcessedMethods.contains(method)) {
                 // Process class's static initializers
@@ -792,7 +794,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         @Override
         public void visitField(@NotNull RefField field) {
 
-            printName("UnusedDeclarationInspectionBase CodeScanner visitField  %s", field);
+//            printName("UnusedDeclarationInspectionBase CodeScanner visitField  %s", field);
 
             // Process class's static initializers.
             if (!field.isReachable()) {
@@ -881,21 +883,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
      */
     private final static Set<RefClass> PROCESSED_REFCLASS = new HashSet<>();
 
-    private static void recursionSetReachable(final @NotNull GlobalInspectionContext globalContext, final @NotNull RefClass refClass) {
-        // 得到字段的 class 类型
-        for (RefClass outTypeReference : refClass.getOutTypeReferences()) {
-
-            if (PROCESSED_REFCLASS.contains(outTypeReference)) {
-                //已经处理了，直接下一个
-                continue;
-            }
-            PROCESSED_REFCLASS.add(outTypeReference);
-
-            getEntryPointsManager(globalContext).addEntryPoint(outTypeReference, false);
-
-            recursionSetReachable(globalContext, outTypeReference);
-        }
-    }
+    private final static RecursionReachable RECURSION_REACHABLE = new RecursionField();
 
     public static void printName(String format, RefJavaElement refJavaElement) {
 
