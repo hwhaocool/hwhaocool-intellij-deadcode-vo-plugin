@@ -9,7 +9,7 @@ can find unused VO in recursion mode
 原生插件会尽可能多的提醒  
 本插件是： `宁放过，勿杀错。`  
 
-扫描出来的东西绝对是 `dead code`， 可以放心的 `Safe Delete` 
+扫描出来的东西`大概率`是 `dead code`， 可以比较放心的 `Safe Delete`  （删除代码有风险，删除请谨慎）
 
 ## Usages
 Preferences | Editor | Inspections | Java | Probable Bugs
